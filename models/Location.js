@@ -1,11 +1,17 @@
 const mongoose = require('mongoose');
 
 const LocationSchema = new mongoose.Schema({
-    state: { type: String, required: true },   
-    parkName: { type: String, required: true }, 
-    address: { type: String, required: true },
-    adminNote: { type: String },
-    isActive: { type: Boolean, default: true }
-});
+  name: { type: String, required: true }, 
+  state: { type: String }, 
+  type: { 
+    type: String, 
+    enum: ['Doorstep', 'Pickup Station', 'park'], 
+    default: 'Pickup Station' 
+  },
+  basePrice: { type: Number, default: 0 }, 
+  isActive: { type: Boolean, default: true },
+  address: String, 
+  adminNote: String 
+}, { timestamps: true });
 
 module.exports = mongoose.model('Location', LocationSchema);
