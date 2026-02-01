@@ -19,7 +19,17 @@ const { createOrder, getOrders } = require('./controllers/orderController');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",                 
+    "http://localhost:5174",  
+    "https://palme-backend.vercel.app",
+    "https://palme-client.vercel.app",       
+    "https://palme-admin.vercel.app",
+    "http://localhost:5000",
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 
