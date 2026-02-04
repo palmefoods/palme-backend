@@ -1,9 +1,9 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Coupon = require('../models/Coupon');
+const Setting = require('../models/Setting');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
-
-
 
 
 const sendEmail = async (order) => {
@@ -15,15 +15,10 @@ const sendEmail = async (order) => {
   const date = new Date(order.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const orderIdShort = order._id.toString().slice(-6).toUpperCase();
   
-  
   let shippingDisplay = "";
-  let shippingTitle = "";
-  
   if (order.deliveryMethod === 'doorstep') {
-      shippingTitle = "Doorstep Delivery Address";
       shippingDisplay = order.customer.address;
   } else {
-      shippingTitle = "Park Pickup Details";
       shippingDisplay = `Pickup at: ${order.parkLocation || "Selected Park"}`;
   }
 
@@ -40,7 +35,7 @@ const sendEmail = async (order) => {
         <div style="padding: 30px;">
             <h2 style="color: #1a4d2e; margin-top: 0; font-size: 20px;">Order Received</h2>
             <p style="color: #4b5563; font-size: 15px; line-height: 1.5;">
-                Hello <strong>${order.customer.name.split(' ')[0]}</strong>, we have received your payment and are preparing your order for shipment.
+                Hello <strong>${order.customer.name.split(' ')[0]}</strong>, we have received your payment.
             </p>
 
             <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
@@ -71,38 +66,37 @@ const sendEmail = async (order) => {
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td style="padding-top: 20px; font-weight: bold; color: #1a4d2e; font-size: 16px;">TOTAL PAID</td>
-                        <td style="text-align: right; padding-top: 20px; font-weight: bold; font-size: 20px; color: #1a4d2e;">₦${order.totalAmount.toLocaleString()}</td>
+                        <td colspan="2" style="padding-top:10px; border-top:1px solid #eee;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; color: #64748b;">Subtotal</td>
+                        <td style="text-align: right; color: #334155;">₦${order.subtotal.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; color: #64748b;">Shipping (Weight: ${order.totalWeight}kg)</td>
+                        <td style="text-align: right; color: #334155;">₦${order.shippingFee.toLocaleString()}</td>
+                    </tr>
+                    ${order.discountAmount > 0 ? `
+                    <tr>
+                        <td style="padding: 5px 0; color: #16a34a;">Discount</td>
+                        <td style="text-align: right; color: #16a34a;">-₦${order.discountAmount.toLocaleString()}</td>
+                    </tr>` : ''}
+                    ${order.tipAmount > 0 ? `
+                    <tr>
+                        <td style="padding: 5px 0; color: #d97706;">Tip</td>
+                        <td style="text-align: right; color: #d97706;">₦${order.tipAmount.toLocaleString()}</td>
+                    </tr>` : ''}
+                    <tr>
+                        <td style="padding-top: 15px; font-weight: bold; color: #1a4d2e; font-size: 16px;">TOTAL PAID</td>
+                        <td style="text-align: right; padding-top: 15px; font-weight: bold; font-size: 20px; color: #1a4d2e;">₦${order.totalAmount.toLocaleString()}</td>
                     </tr>
                 </tfoot>
             </table>
 
             <div style="margin-top: 30px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
-                <h3 style="font-size: 14px; font-weight: bold; color: #334155; text-transform: uppercase; margin-bottom: 8px;">${shippingTitle}</h3>
-                <p style="margin: 0; color: #475569; font-size: 15px;">${shippingDisplay}</p>
+                <p style="margin: 0; color: #475569; font-size: 15px;"><strong>Delivering to:</strong> ${shippingDisplay}</p>
                 <p style="margin: 5px 0 0 0; color: #475569; font-size: 15px;">${order.customer.phone}</p>
             </div>
-
-           <div style="margin-top: 40px; background-color: #f8fafc; border-top: 4px solid #1a4d2e; padding: 40px 20px; text-align: center;">
-    
-    <div style="margin-bottom: 20px;">
-        <a href="https://instagram.com" style="text-decoration: none; margin: 0 10px; color: #1a4d2e; font-weight: bold; font-size: 14px;">Instagram</a>
-        <span style="color: #cbd5e1;">|</span>
-        <a href="https://facebook.com" style="text-decoration: none; margin: 0 10px; color: #1a4d2e; font-weight: bold; font-size: 14px;">Facebook</a>
-        <span style="color: #cbd5e1;">|</span>
-        <a href="https://wa.me/+2349134033103" style="text-decoration: none; margin: 0 10px; color: #1a4d2e; font-weight: bold; font-size: 14px;">WhatsApp</a>
-    </div>
-
-    <p style="color: #64748b; font-size: 12px; margin-bottom: 10px; line-height: 1.6;">
-        <strong>Palme Foods Nigeria</strong><br/>
-        Ibadan, Oyo State.
-    </p>
-
-    <p style="color: #94a3b8; font-size: 11px; margin: 0;">
-        You received this email because you purchased from Palme Foods.<br/>
-        © ${new Date().getFullYear()} All rights reserved.
-    </p>
-</div>
         </div>
       </div>
     `
@@ -110,9 +104,6 @@ const sendEmail = async (order) => {
 
   await transporter.sendMail(mailOptions);
 };
-
-
-
 
 const sendStatusEmail = async (order) => {
   const transporter = nodemailer.createTransport({
@@ -157,27 +148,6 @@ const sendStatusEmail = async (order) => {
                 </p>
             </div>
             ` : ''}
-
-            <div style="margin-top: 40px; background-color: #f8fafc; border-top: 4px solid #1a4d2e; padding: 40px 20px; text-align: center;">
-    
-                <div style="margin-bottom: 20px;">
-                    <a href="https://instagram.com" style="text-decoration: none; margin: 0 10px; color: #1a4d2e; font-weight: bold; font-size: 14px;">Instagram</a>
-                    <span style="color: #cbd5e1;">|</span>
-                    <a href="https://facebook.com" style="text-decoration: none; margin: 0 10px; color: #1a4d2e; font-weight: bold; font-size: 14px;">Facebook</a>
-                    <span style="color: #cbd5e1;">|</span>
-                    <a href="https://wa.me/+2349134033103" style="text-decoration: none; margin: 0 10px; color: #1a4d2e; font-weight: bold; font-size: 14px;">WhatsApp</a>
-                </div>
-
-                <p style="color: #64748b; font-size: 12px; margin-bottom: 10px; line-height: 1.6;">
-                    <strong>Palme Foods Nigeria</strong><br/>
-                    Ibadan, Oyo State.
-                </p>
-
-                <p style="color: #94a3b8; font-size: 11px; margin: 0;">
-                    You received this email because you purchased from Palme Foods.<br/>
-                    © ${new Date().getFullYear()} All rights reserved.
-                </p>
-            </div>
         </div>
       </div>
     `
@@ -187,14 +157,87 @@ const sendStatusEmail = async (order) => {
 };
 
 
-
-
 const createOrder = async (req, res) => {
   console.log("🔥 Create Order Triggered");
 
   try {
-    const { customer, items, deliveryMethod, parkLocation, totalAmount, paymentReference } = req.body;
+    const { customer, items, deliveryMethod, parkLocation, paymentReference, couponCode, tip } = req.body;
     
+    
+    const settingsRaw = await Setting.find();
+    const settings = settingsRaw.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {});
+    
+    
+    const BASE_WEIGHT = Number(settings.base_weight_kg) || 5; 
+    const EXTRA_KG_FEE = Number(settings.extra_kg_price) || 1000;
+    const DOORSTEP_BASE = Number(settings.doorstep_price) || 10000;
+    const PARK_BASE = Number(settings.park_price) || 5000;
+
+    
+    let calculatedSubtotal = 0;
+    let totalWeight = 0;
+    let finalItems = [];
+
+    for (const item of items) {
+        const product = await Product.findOne({ name: item.name });
+        
+        if (!product) continue;
+
+        
+        const qty = item.qty || item.quantity;
+        if (product.stock < qty) {
+            return res.status(400).json({ message: `Insufficient stock for ${item.name}` });
+        }
+
+        
+        product.stock -= qty;
+        await product.save();
+
+        
+        const itemWeight = (product.weightKg || 0) * qty;
+        
+        calculatedSubtotal += product.price * qty;
+        totalWeight += itemWeight;
+
+        finalItems.push({
+            name: product.name,
+            quantity: qty,
+            price: product.price,
+            size: product.size,
+            image: product.image,
+            weightKg: product.weightKg || 0
+        });
+    }
+
+    
+    let shippingFee = deliveryMethod === 'doorstep' ? DOORSTEP_BASE : PARK_BASE;
+
+    
+    if (deliveryMethod === 'doorstep' && totalWeight > BASE_WEIGHT) {
+        const extraWeight = Math.ceil(totalWeight - BASE_WEIGHT);
+        shippingFee += (extraWeight * EXTRA_KG_FEE);
+    }
+
+    
+    let discountAmount = 0;
+    if (couponCode) {
+        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+        if (coupon) {
+            if (coupon.usedCount < coupon.maxUses) {
+                
+                discountAmount = (calculatedSubtotal * coupon.discountPercentage) / 100;
+                
+                
+                coupon.usedCount += 1;
+                await coupon.save();
+            }
+        }
+    }
+
+    
+    const tipAmount = Number(tip) || 0;
+    const finalTotal = calculatedSubtotal + shippingFee + tipAmount - discountAmount;
+
     
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
     const verification = await axios.get(`https://api.paystack.co/transaction/verify/${paymentReference}`, {
@@ -206,44 +249,19 @@ const createOrder = async (req, res) => {
     }
 
     
-    for (const item of items) {
-        const product = await Product.findOne({ name: item.name });
-        if (product) {
-            if (product.stock < (item.qty || item.quantity)) {
-                return res.status(400).json({ message: `Insufficient stock for ${item.name}` });
-            }
-            product.stock -= (item.qty || item.quantity);
-            await product.save();
-
-            
-            if (product.stock <= 5) {
-                const transporter = nodemailer.createTransport({
-                    service: 'gmail',
-                    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-                });
-                await transporter.sendMail({
-                    from: `"System Alert" <${process.env.EMAIL_USER}>`,
-                    to: process.env.EMAIL_USER,
-                    subject: `⚠️ Low Stock: ${product.name}`,
-                    html: `<p>Stock for <b>${product.name}</b> is down to <b>${product.stock}</b>.</p>`
-                });
-            }
-        }
-    }
-
-    
     const newOrder = new Order({
       customer,
-      items: items.map(i => ({
-          name: i.name,
-          quantity: i.qty || i.quantity,
-          price: i.price,
-          size: i.size,
-          image: i.image 
-      })),
+      items: finalItems,
       deliveryMethod,
-      parkLocation: deliveryMethod === 'park' ? parkLocation : '', 
-      totalAmount,
+      parkLocation: deliveryMethod === 'park' ? parkLocation : '',
+      
+      subtotal: calculatedSubtotal,
+      shippingFee,
+      discountAmount,
+      tipAmount,
+      totalAmount: finalTotal,
+      totalWeight,
+
       paymentReference,
       paymentStatus: 'Paid',
       orderStatus: 'Pending'

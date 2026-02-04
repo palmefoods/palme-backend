@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');      
-const nodemailer = require('nodemailer'); 
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -11,16 +11,21 @@ const generateToken = (id) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please add all fields' });
+    
+    
+    if (!name || !email || !password || !phone) {
+      return res.status(400).json({ message: 'Please add all fields (Name, Email, Password, Phone)' });
     }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
+
     const user = await User.create({
-      name, email, password, phone, role: 'user' 
+      name, email, password, phone, role: 'user'
     });
+
     if (user) {
       res.status(201).json({
         _id: user.id,
@@ -42,6 +47,7 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+
     if (user && (await user.matchPassword(password))) {
       res.json({
         success: true,
@@ -50,7 +56,7 @@ const loginUser = async (req, res) => {
             name: user.name,
             email: user.email,
             phone: user.phone,
-            role: user.role,
+            role: user.role, 
         },
         token: generateToken(user._id),
       });
@@ -63,8 +69,6 @@ const loginUser = async (req, res) => {
 };
 
 
-
-
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -74,17 +78,16 @@ const forgotPassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    
     const resetToken = crypto.randomBytes(20).toString('hex');
 
-    
     user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; 
 
-    await user.save({ validateBeforeSave: false }); 
+    await user.save({ validateBeforeSave: false });
 
     
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendBase}/reset-password/${resetToken}`;
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -115,10 +118,8 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-
 const resetPassword = async (req, res) => {
   try {
-    
     const resetPasswordToken = crypto.createHash('sha256').update(req.params.resetToken).digest('hex');
 
     const user = await User.findOne({
@@ -130,7 +131,6 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
-    
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;

@@ -1,36 +1,42 @@
 const mongoose = require('mongoose');
 
-const orderSchema = new mongoose.Schema({
+const OrderSchema = new mongoose.Schema({
   customer: {
     name: { type: String, required: true },
     email: { type: String, required: true },
-    phone: String,
-    address: String
+    phone: { type: String, required: true },
+    address: { type: String }
   },
   items: [
     {
-      name: String,
-      quantity: Number,
-      price: Number,
-      size: String, 
-      image: String 
+      name: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      price: { type: Number, required: true },
+      size: { type: String },
+      image: { type: String },
+      weightKg: { type: Number, default: 0 } 
     }
   ],
-  totalAmount: { type: Number, required: true },
-
+  deliveryMethod: { type: String, required: true }, 
+  parkLocation: { type: String },
   
+  
+  subtotal: { type: Number, required: true },
+  shippingFee: { type: Number, required: true },
+  tipAmount: { type: Number, default: 0 }, 
+  discountAmount: { type: Number, default: 0 }, 
+  totalAmount: { type: Number, required: true },
+  
+  
+  totalWeight: { type: Number, default: 0 },
+  
+  paymentReference: { type: String, required: true },
+  paymentStatus: { type: String, default: 'Paid' },
   orderStatus: { 
     type: String, 
-    enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], 
-    default: 'Pending' 
-  },
-
-  
-  deliveryMethod: { type: String, default: 'doorstep' }, 
-  parkLocation: { type: String, default: '' },
-  paymentReference: { type: String },
-  paymentStatus: { type: String, default: 'Unpaid' }
-
+    default: 'Pending',
+    enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] 
+  }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model('Order', OrderSchema);
