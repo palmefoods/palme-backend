@@ -10,7 +10,10 @@ const Location = require('./models/Location');
 const SiteContent = require('./models/SiteContent'); 
 const Product = require('./models/Product');
 const User = require('./models/User');
-const Coupon = require('./models/Coupon'); 
+const Coupon = require('./models/Coupon');
+const { sendContactEmail } = require('./controllers/contactController'); 
+
+
 
 
 const authRoutes = require('./routes/authRoutes'); 
@@ -199,6 +202,8 @@ app.post('/api/newsletter', async (req, res) => {
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: "Failed to subscribe" }); }
 });
+
+app.post('/api/contact', sendContactEmail);
 
 app.get("/", (req, res) => res.send("PalmeFoods API is running!"));
 
