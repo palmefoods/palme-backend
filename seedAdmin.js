@@ -23,7 +23,7 @@ const seedAdmin = async () => {
     });
 
     await admin.save();
-    console.log("✅ Admin Created Successfully!");
+    console.log(" Admin Created Successfully!");
     console.log("Email: admin@palmefoods.com");
     console.log("Password: admin123");
     process.exit();

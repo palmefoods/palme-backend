@@ -30,11 +30,11 @@ router.post('/', (req, res) => {
 
   uploadSingle(req, res, (err) => {
     if (err) {
-      console.error("❌ UPLOAD ERROR DETAILED:", JSON.stringify(err, null, 2));
-      console.error("❌ ERROR MESSAGE:", err.message);
+      console.error(" UPLOAD ERROR DETAILED:", JSON.stringify(err, null, 2));
+      console.error(" ERROR MESSAGE:", err.message);
       
       
-      if (err.http_code) console.error("❌ HTTP CODE:", err.http_code);
+      if (err.http_code) console.error(" HTTP CODE:", err.http_code);
 
       return res.status(500).json({ 
         error: 'Upload failed', 
