@@ -31,6 +31,8 @@ app.use(cors({
     "https://palme-client.vercel.app",       
     "https://palme-admin.vercel.app",
     "http://localhost:5000",
+    "https://palmefoods.com",
+    "https://www.palmefoods.com"
   ],
   credentials: true
 }));
