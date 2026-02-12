@@ -169,9 +169,9 @@ const createOrder = async (req, res) => {
     
     
     const BASE_WEIGHT = Number(settings.base_weight_kg) || 5; 
-    const EXTRA_KG_FEE = Number(settings.extra_kg_price) || 1000;
-    const DOORSTEP_BASE = Number(settings.doorstep_price) || 10000;
-    const PARK_BASE = Number(settings.park_price) || 5000;
+    const EXTRA_KG_FEE = Number(settings.extra_kg_price) || 0;
+    const DOORSTEP_BASE = Number(settings.doorstep_price) || 0;
+    const PARK_BASE = Number(settings.park_price) || 0;
 
     
     let calculatedSubtotal = 0;
